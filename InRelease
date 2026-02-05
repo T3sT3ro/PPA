@@ -1,0 +1,27 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Date: Thu, 05 Feb 2026 20:40:58 +0000
+MD5Sum:
+ 075bc017802488a28275b29f834c854d              455 Packages
+ 1a18be9167d2c4af349b94dcad4fe23a              365 Packages.gz
+ cf36cf2d7bd343bbdb248e4440e08edb               38 Release
+SHA1:
+ 733ffdf29f0041272803fab8807298b922057041              455 Packages
+ 06cb356ec620e939f57c09ed38a670147878fd44              365 Packages.gz
+ 5ab79cf06e7330f49c57ad86cc65e81f8df8c4ad               38 Release
+SHA256:
+ 9509a334817ea06d6cd906951b15b93d6d05df8c7de40a18596837c0806e900f              455 Packages
+ 1a788eeeebaafdc70f07f8bee10c7201a589c2767187540d73fa8e7fad885b74              365 Packages.gz
+ 7562da6e22133e0162cfdfc1bfdda8b84bfa0673ac1ca17357c30bfc9289b397               38 Release
+SHA512:
+ c02ca8783079a0f293003359c235b1639bdae983497a88abfff7e1aed6c31f537b2e5f7cce799f3135acc37c919347b101c792d5604eea0b708c11c70c05e204              455 Packages
+ 2c286a04a01b2ae3a2067781e9bbdefae154016ef1c63df1b234033d7148ba162e177c05cdb980ffac3f6d6bb190e62e4844b622a0568143b2d7b0a70e233e0f              365 Packages.gz
+ 53b8a0361ada9e786adf7ce11528552adf1ad1cab3d27094cbffc2da1b84ce67146eabb9891acd9e84f020f20c9cd187e56d73c2a93e9284b4e782a8890dafc4               38 Release
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQSOwg/GWg32xz9tJhTiRmUquXV8cQUCaYUERgAKCRDiRmUquXV8
+ccpVAP4idqkcbQx0bdb4/ZxQPzN6EAXcNqS7Z+L11sRlI8Y3RgD/ZY1Ur8ePrqeA
+unpZhZmd+q4Q/CSqVICxeGLDCw4lSw4=
+=Vi5P
+-----END PGP SIGNATURE-----

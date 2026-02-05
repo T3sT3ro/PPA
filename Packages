@@ -1,0 +1,14 @@
+Package: hello-kitty
+Version: 0.1.0-1
+Architecture: amd64
+Maintainer: Tooster <5300963+T3sT3ro@users.noreply.github.com>
+Installed-Size: 369
+Depends: libc6 (>= 2.34)
+Filename: ./hello-kitty_0.1.0-1_amd64.deb
+Size: 149520
+MD5sum: d684f2ecf93416021fcd87aca4f3b6e6
+SHA1: 8dd2dcaed6ed4355ddb06d2ad53c72994cad9663
+SHA256: 082b54d4bb8338ce333b28f2722868633818df07c033a31d6df5ee7b43c71974
+Priority: optional
+Description: [generated from Rust crate hello-kitty]
+
