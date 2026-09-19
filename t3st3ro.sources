@@ -1,0 +1,4 @@
+Types: deb
+URIs: https://dashunderdash.com/PPA
+Suites: ./
+Signed-By: /etc/apt/keyrings/t3st3ro.asc

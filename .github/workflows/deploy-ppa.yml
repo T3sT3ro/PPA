@@ -1,0 +1,94 @@
+name: Build and Deploy PPA
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ 'pool/**/*.deb', 'README.md', 'template.html', 't3st3ro.sources' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install APT tools & pandoc
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev apt-utils gnupg pandoc
+
+      - name: Import GPG Key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
+        run: echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Generate APT Metadata
+        run: |
+          gpg --armor --export "${{ secrets.PPA_GPG_EMAIL }}" > KEY.gpg
+          
+          dpkg-scanpackages --multiversion pool/ > Packages
+          gzip -k -f Packages
+          
+          apt-ftparchive release . > Release
+          gpg --batch --yes --default-key "${{ secrets.PPA_GPG_EMAIL }}" -abs -o Release.gpg Release
+          gpg --batch --yes --default-key "${{ secrets.PPA_GPG_EMAIL }}" --clearsign -o InRelease Release
+
+      - name: Generate HTML index
+        run: |
+          # Append packages to README.md
+          
+          echo -e "## Available Packages\n" >> README.md
+
+          for file in pool/*.deb; do 
+            if [ -f "$file" ]; then 
+              echo "- [$file]($file)" >> README.md
+            fi
+          done
+          
+          # Convert the final markdown directly to index.html
+          pandoc README.md -s -o index.html \
+            --metadata title="T3sT3ro's PPA" \
+            -t html5 --template=template.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  test-ppa:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    container: ubuntu:rolling
+    steps:
+      - name: Wait for Pages deployment propagation
+        run: sleep 15
+        
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y curl ca-certificates
+
+      - name: Add PPA
+        run: |
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://dashunderdash.com/PPA/KEY.gpg -o /etc/apt/keyrings/t3st3ro.asc
+          curl -fsSL https://dashunderdash.com/PPA/t3st3ro.sources -o /etc/apt/sources.list.d/t3st3ro.sources
+
+      - name: Test APT Update
+        run: apt-get update
