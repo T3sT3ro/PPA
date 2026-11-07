@@ -43,21 +43,18 @@ jobs:
           TAG: ${{ inputs.tag || github.event.client_payload.tag }}
         run: scripts/sync-releases.sh
 
-      # A push made with GITHUB_TOKEN does not trigger other workflows,
-      # so the deploy is started explicitly.
-      - name: Commit, push and deploy
+      # Commits through the GitHub API rather than git push, so GitHub signs the
+      # commit and it passes a "Require signed commits" rule. A commit made with
+      # GITHUB_TOKEN does not trigger other workflows, so the deploy is started
+      # explicitly.
+      - name: Commit and deploy
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add pool/
-          if git diff --cached --quiet; then
+          mapfile -t files < <(git ls-files --others --exclude-standard pool/)
+          if [ ${#files[@]} -eq 0 ]; then
             echo "No new packages."
             exit 0
           fi
-          files=$(git diff --cached --name-only)
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(pool): sync $(wc -l <<<"$files") package file(s) from releases" -m "$files"
-          git pull --rebase
-          git push
+          scripts/api-commit.sh "chore(pool): sync ${#files[@]} package file(s) from releases" "${files[@]}"
           gh workflow run deploy-ppa.yml --ref "$GITHUB_REF_NAME"

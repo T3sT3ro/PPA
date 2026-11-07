@@ -24,6 +24,7 @@ Git holds only the inputs. Every deploy rebuilds the signed metadata, the `.sour
 | `ppa.sh` | Command-line tool for setup, connecting repositories, syncing and key rotation (see [section 6](#6-ppash-reference)). |
 | `scripts/build-site.sh` | Builds the site into `_site/`. Used by the deploy workflow and `./ppa.sh preview`. |
 | `scripts/sync-releases.sh` | Downloads release assets into `pool/`. Used by the sync workflow. |
+| `scripts/api-commit.sh` | Commits files through the GitHub API, so GitHub signs the commit. Used by the sync workflow. |
 | `scripts/config.sh` | Resolves the configuration. Shared by the scripts above and `ppa.sh`. |
 | `.github/workflows/deploy-ppa.yml` | Build, sign, deploy and test. |
 | `.github/workflows/sync-releases.yml` | Release sync. |
@@ -159,7 +160,12 @@ For each listed repository, `scripts/sync-releases.sh`:
 3. Renames it to the canonical `name_version_arch.deb`, taken from the package metadata, so differently named assets cannot collide.
 4. Adds it to `pool/` unless a file of that name already exists. Existing files are **never overwritten**. If an upstream asset changes under the same version, the sync keeps the published file and logs a warning.
 
-If anything new arrived, the workflow commits it as `github-actions[bot]`, pushes, and starts `deploy-ppa.yml` with `gh workflow run`. That last step is needed because a push made with `GITHUB_TOKEN` [does not trigger other workflows](https://docs.github.com/en/actions/concepts/security/github_token).
+If anything new arrived, the workflow commits it to `main` with `scripts/api-commit.sh`, as `github-actions[bot]`:
+
+* **The commit goes through the GitHub API rather than `git push`.** GitHub signs commits made that way, so they pass a "Require signed commits" rule. A commit made with git on the runner would be unsigned.
+* **It builds on the newest `main`**, so pushes made during the sync are kept. The branch update is fast-forward only: if `main` moves during the few seconds of the commit itself, GitHub refuses the update and the next sync retries.
+
+Then it starts `deploy-ppa.yml` with `gh workflow run`. That step is needed because changes made with `GITHUB_TOKEN` [do not trigger other workflows](https://docs.github.com/en/actions/concepts/security/github_token).
 
 ### Private source repositories
 
@@ -222,7 +228,28 @@ Every command that commits asks before it pushes. `ppa.sh` needs `gh` logged in 
 
 ---
 
-## 7. Troubleshooting
+## 7. Repository rules
+
+If you protect `main` with a ruleset (**Settings → Rules**) or branch protection, this is how each rule interacts with the automation:
+
+| Rule | Works with this repository? |
+| --- | --- |
+| Require signed commits | **Yes.** Sign your own commits, e.g. with `git config commit.gpgsign true`. `ppa.sh` commits with your git config. The sync commits through the GitHub API, and GitHub signs those commits. |
+| Require linear history | **Yes.** `ppa.sh` rebases before pushing, and the sync only fast-forwards. |
+| Block force pushes | **Yes.** Nothing force-pushes. |
+| Require deployments to succeed (`github-pages`) | **No.** `github-pages` only accepts deployments from `main`, and a commit is only deployed after it reaches `main`, so no push can ever meet this rule. Every push fails with `Missing successful active github-pages deployment`. Remove the rule. The `test-ppa` job already checks every deploy. |
+| Require a pull request, or require status checks | **Not for the sync.** The sync updates `main` directly, and `ppa.sh` pushes to it. With these rules, both are rejected. |
+
+To see which rule rejected a push, open **Settings → Rules → Insights**, or run:
+
+```bash
+gh api "repos/OWNER/REPO/rulesets/rule-suites?time_period=day" --jq '.[] | {id, ref, result}'
+gh api repos/OWNER/REPO/rulesets/rule-suites/ID --jq '.rule_evaluations[] | select(.result == "fail")'
+```
+
+---
+
+## 8. Troubleshooting
 
 | Symptom | Likely cause and fix |
 | --- | --- |
@@ -236,5 +263,6 @@ Every command that commits asks before it pushes. `ppa.sh` needs `gh` logged in 
 | Users get `NO_PUBKEY` or `The following signatures couldn't be verified` | Their keyring is out of date (usually after a key rotation). Download `KEY.gpg` again. |
 | A push to `main` did not deploy | The changed paths are outside the workflow's `paths:` filter (e.g. docs only). Run `gh workflow run deploy-ppa.yml`. |
 | The sync warns `nothing downloaded` | The release has no asset matching the glob, the repository has no release, or it is private and `PPA_SYNC_TOKEN` is missing. |
-| The sync fails at `git push` | Branch protection on `main` blocks `github-actions[bot]`. Allow it to push, or sync by hand. |
+| A push, or the sync's commit step, fails with `Repository rule violations` | A rule on `main` blocks it. See [Repository rules](#7-repository-rules). |
+| The sync fails with `Update is not a fast forward` | `main` moved while the sync was committing. The next run retries, or run `./ppa.sh sync`. |
 | The nightly sync stopped running | GitHub disables scheduled workflows in public repositories after 60 days without activity. Re-enable it in the Actions tab. Any push to this repository resets the clock, including the sync's own commits. |

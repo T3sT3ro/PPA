@@ -84,7 +84,8 @@ commit_and_push() { # MESSAGE FILES...
     return 2
   fi
   git pull --rebase --autostash --quiet || die "git pull --rebase failed; resolve it, then run 'git push'."
-  git push --quiet || die "git push failed"
+  git push --quiet ||
+    die "git push failed. The commit is saved locally. If a repository rule blocked it, see DEVELOPMENT.md → Repository rules."
 }
 
 start_workflow() { # WORKFLOW [gh workflow run args...]

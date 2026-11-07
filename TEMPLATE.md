@@ -65,7 +65,7 @@ Do not let `pool/` become empty. The deploy needs the directory to exist, so com
 
 ## 4. Check
 
-Open the **Actions** tab. **Build and Deploy PPA** should pass both jobs. `test-ppa` waits until the new build is live, then installs the repository the way `README.md` describes. If something fails, see [Troubleshooting](DEVELOPMENT.md#7-troubleshooting).
+Open the **Actions** tab. **Build and Deploy PPA** should pass both jobs. `test-ppa` waits until the new build is live, then installs the repository the way `README.md` describes. If something fails, see [Troubleshooting](DEVELOPMENT.md#8-troubleshooting). If you protect `main` with a ruleset, check [which rules work with the automation](DEVELOPMENT.md#7-repository-rules). In particular, "Require deployments to succeed" blocks every push.
 
 Then follow the install steps on your site on a Debian or Ubuntu machine:
 
