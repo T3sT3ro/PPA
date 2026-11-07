@@ -1,0 +1,6 @@
+# Repositories whose GitHub release .deb assets are synced into pool/.
+# Add entries with: ./ppa.sh connect OWNER/REPO [GLOB]
+#
+# Format: one repository per line, with an optional asset glob (default: *.deb).
+#   OWNER/REPO
+#   OWNER/OTHER-REPO  *_amd64.deb
