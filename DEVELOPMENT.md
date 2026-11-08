@@ -134,7 +134,17 @@ If other repositories of yours publish `.deb` files as GitHub release assets, th
 ./ppa.sh connect OWNER/REPO '*_amd64.deb' # only assets matching a glob
 ```
 
-The command checks the repository and shows which assets of its latest release match. It then adds a line to [`upstreams.txt`](upstreams.txt), commits, and asks before pushing. The push starts a sync. You can also edit `upstreams.txt` by hand: one `OWNER/REPO [GLOB]` per line, `#` for comments. To disconnect a repository, delete its line. Packages already in `pool/` stay.
+The command checks the repository and shows which assets of its latest release match. It then adds a line to [`upstreams.txt`](upstreams.txt), commits, and asks before pushing. The push starts a sync. You can also edit `upstreams.txt` by hand: one `OWNER/REPO [GLOB]` per line, `#` for comments.
+
+To disconnect a repository, delete its line. This only stops future syncs: packages that were already synced stay in `pool/` and on the site, because the sync never deletes files. To remove them too, delete them and push. The push starts a deploy without them:
+
+```bash
+git rm pool/NAME_*.deb
+git commit -m "Remove NAME from the PPA"
+git push
+```
+
+Users who already installed the package keep it, but they get no more updates for it from this repository.
 
 ### When it runs
 
